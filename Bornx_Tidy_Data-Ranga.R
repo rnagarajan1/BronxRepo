@@ -1,51 +1,58 @@
-##test
-setwd("E:/Users/Andy/Desktop")
-
-## Read in only the first 4 lines of the data because it is only descriptive information about the dataset
-bronx_descrip <- read.csv("rollingsales_bronx.csv", nrows=4, header= FALSE)
-
-## Only keep the first column of the descriptive data
-bronx_descrip2 <- bronx_descrip[,1, drop = FALSE]
-
-## Read in the remainder of the dataset as is for now
-bronx <- read.csv("rollingsales_bronx.csv", skip=4, header=TRUE)
-
-## Look at structure of dataset
-dim(bronx)
-str(bronx)
-names(bronx)
-
-## Rename column headings to more meaningful and get rid of spaces:
-names(bronx) <- c("Borough", "Neighborhood", "Bldg_Class_Category", "Current_Tax_Class", "Block", "Lot",
-                  "Easement", "Current_Bldg_Class", "Address", "Apartment #", "Zip_Code", "# Residential_Units",
-                  "# Commercial_Units", "Total_#_Units", "Dwelling_Sq_Ft", "Gross_Sq_Feet", "Year_Built",
-                  "Tax_Class_At_Sale", "Bldg_Class_Category_At_Sale", "Sale_Price", "Date_of_Sale")
-
-## Transform the Borough of "2" into more meaningful such as text: "Bronx"
-if(bronx$Borough == 2) {
-  as.character(bronx$Borough <- "Bronx")
-} 
-
-## Break up multiple variables stored in column and then delete the original column
-bronx$Bldg_Class_Code <- substr(bronx$Bldg_Class_Category,1,2)
-bronx$Bldg_Class_Description <- substr(bronx$Bldg_Class_Category,4, length(bronx$Bldg_Class_Category))
-
-## Delete old multiple variable column from dataset
-bronx <- bronx[, c(-3)]
-
-## Move newly created variables(columns) back to original place in dataset
-bronx <- bronx[, c(1, 2, 21, 22, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20)]
+# Author: Benjamin Reddy
+# Taken from pages 49-50 of O'Neil and Schutt
 
 
-## Change missing data/values into a value (0s, etc)
-if(bronx$Current_Tax_Class == "") {
-  bronx$Current_Tax_Class  <- "0" 
-}
+setwd("C:\\Users\\swara\\OneDrive\\Documents\\MSDS\\Data Science\\Unit 6\\")
+
+# http://www1.nyc.gov/site/finance/taxes/property-rolling-sales-data.page
 
 
+# read csv file
+bk <- read.csv("rollingsales_bronx.csv",skip=4,header=TRUE)
 
-head(bronx)
-tail(bronx)
+## Check the data
+head(bk)
+summary(bk)
+str(bk) # Very handy function!
+#Compactly display the internal structure of an R object.
 
 
-write.table(bronx, "c:\\Users\\1028823491C\\Desktop\\mydata.txt", sep="\t")
+## clean/format the data with regular expressions
+## More on these later. For now, know that the
+## pattern "[^[:digit:]]" refers to members of the variable name that
+## start with digits. We use the gsub command to replace them with a blank space.
+# We create a new variable that is a "clean' version of sale.price.
+# And sale.price.n is numeric, not a factor.
+bk$SALE.PRICE.N <- as.numeric(gsub("[^[:digit:]]","", bk$SALE.PRICE))
+#count(is.na(bk$SALE.PRICE.N))
+
+names(bk) <- tolower(names(bk)) # make all variable names lower case
+
+## Get rid of leading digits
+bk$gross.sqft <- as.numeric(gsub("[^[:digit:]]","", bk$gross.square.feet))
+bk$land.sqft <- as.numeric(gsub("[^[:digit:]]","", bk$land.square.feet))
+bk$year.built <- as.numeric(as.character(bk$year.built))
+
+## do a bit of exploration to make sure there's not anything
+## weird going on with sale prices
+attach(bk)
+hist(sale.price.n) 
+detach(bk)
+
+## keep only the actual sales
+
+bk.sale <- bk[bk$sale.price.n!=0,]
+plot(bk.sale$gross.sqft,bk.sale$sale.price.n)
+plot(log10(bk.sale$gross.sqft),log10(bk.sale$sale.price.n))
+
+## for now, let's look at 1-, 2-, and 3-family homes
+bk.homes <- bk.sale[which(grepl("FAMILY",bk.sale$building.class.category)),]
+dim(bk.homes)
+plot(log10(bk.homes$gross.sqft),log10(bk.homes$sale.price.n))
+summary(bk.homes[which(bk.homes$sale.price.n<100000),])
+""
+
+## remove outliers that seem like they weren't actual sales
+bk.homes$outliers <- (log10(bk.homes$sale.price.n) <=5) + 0
+bk.homes <- bk.homes[which(bk.homes$outliers==0),]
+plot(log10(bk.homes$gross.sqft),log10(bk.homes$sale.price.n))
