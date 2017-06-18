@@ -24,7 +24,7 @@ fileName <- "rollingsales_bronx.csv"
 setwd(mainDirectory)
 # Create data and analysis directory
 if(!dir.exists(dataDirectory))
-  dir.create(dataDirectory)
+  dir.create("dataDirectory")
 
 if(!dir.exists(analysisDirectory))
   dir.create(analysisDirectory)
@@ -39,6 +39,12 @@ file.copy(from,dataDirectory)
 setwd(dataDirectory)
 # This will ensure you are inside working directory
 getwd()
+# Read csv file
+bx <- read.csv("rollingsales_bronx.csv",skip=4,header=TRUE)
+# Check the Data and its internal structure
+dim(bx)
+str(bx)
+
 
 ```
 
