@@ -4,7 +4,7 @@ Group project for SMU DATA SCIENCE 2017 Summer .
 #Rolling Sales Data
 The Department of Finance’s Rolling Sales files lists properties that sold in the last twelve-month period in New York City for all tax classes. These files include the neighborhood, building type, square footage and other data.
 
-Our project inlcudes the following goal.
+Our project is analysing the Bronx data from the above New York  city's dataset and it inlcudes the following goal.
 
 Goal: Create an RStudio project for the analysis of this data set. Your file structure within the
 project should include the following:
