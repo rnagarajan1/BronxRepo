@@ -2,7 +2,7 @@
 This is a group assignment created for MSDS 6306 Summer 2017 @SMU based on Bronx data available at 
 <a href = "http://www1.nyc.gov/site/finance/taxes/property-rolling-sales-data.page">NYC Department Of Finance</a>
 
-#Getting Started
+#Data Set Info
 The Department of Finance’s Rolling Sales files lists properties that sold in the last twelve-month period in New York City for all tax classes. These files include the neighborhood, building type, square footage and other data.
 
 #Common glossary terms used for this data set.
