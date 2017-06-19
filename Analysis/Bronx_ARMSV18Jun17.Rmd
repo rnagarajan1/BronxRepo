@@ -1,0 +1,158 @@
+---
+title: 'Rolling Sales Bronx Data'
+author: "A.R.M.S"
+date: "June 18, 2017"
+output: 
+  html_document:
+     keep_md: true
+---
+
+#Rolling-Sales-Data: Bronx
+This is a group assignment created for MSDS 6306 Summer 2017 @SMU.
+
+###*_Set up the working directory:_*
+```{r}
+setwd("E:/Users/Andy/Desktop")
+```
+
+###*_Skip the first four lines of the file and read in remainder on the csv file and create the blockcode dataset:_*
+```{r}
+bronx <- read.csv("rollingsales_bronx.csv", skip=4, header=TRUE)
+blockCode <- bronx[c(5,11)]
+```
+
+###*_In order to tidy/clean up the dataset, need to look at the structure of it:_*
+```{r}
+dim(bronx)
+str(bronx)
+names(bronx)
+```
+
+###*_Now, reformat Column Headings into R consistent variable naming convention:_*
+```{r}
+names(bronx)[1:21] <- tolower(names(bronx)[1:21])
+names(bronx) <- paste(toupper(substring(names(bronx), 1, 1)), tolower(substring(names(bronx), 2)), sep = "")
+names(bronx) <- gsub("(\\..)","\\U\\1", names(bronx), perl=TRUE)
+names(bronx) <- gsub("(\\.)", "", names(bronx))
+names(bronx)
+```
+
+###*_Next, transform the Borough of "2" into more meaningful such as text: "Bronx":_*
+```{r}
+bronx$Borough <- ifelse(bronx$Borough == 2, "Bronx", "")
+```
+
+###*_Break up multiple variables stored in column and then delete the original column:_*
+```{r}
+bronx$BuildingClassCategoryCode <- substr(bronx$BuildingClassCategory,1,2)
+bronx$BuildingClassDescription <- substr(bronx$BuildingClassCategory,4, length(bronx$BuildingClassCategory))
+```
+
+###*_Delete old multiple variable column from dataset and Easement contains no data removing from dataset as well:_*
+```{r}
+bronx <- bronx[, -c(3, 7)]
+```
+
+###*_Move newly created variables(columns) back to original place in dataset:_*
+```{r}
+bronx <- bronx[, c(1, 2, 20, 21, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19)]
+head(bronx,1)
+```
+###*_Remove dashes "-" in the Residential/Commercial Units columns and set it reflect 0:_*
+```{r}
+bronx$ResidentialUnits <- gsub("(\\-)","0", (bronx$ResidentialUnits))
+bronx$CommercialUnits <- gsub("(\\-)","0", (bronx$CommercialUnits))
+```
+
+###*_Convert variables into proper datatypes:_*
+```{r}
+## Convert variables into proper datatypes
+bronx$Borough <- as.character(bronx$Borough)
+bronx$Neighborhood <- as.character(bronx$Neighborhood)
+bronx$Address <- as.character(bronx$Address)
+bronx$ApartmentNumber <- as.character(bronx$ApartmentNumber)
+bronx$ZipCode <- as.character(bronx$ZipCode)
+bronx$ResidentialUnits <- as.integer(bronx$ResidentialUnits)
+bronx$CommercialUnits <- as.integer(bronx$CommercialUnits)
+bronx$TotalUnits <- as.integer(bronx$TotalUnits)
+bronx$TaxClassAtTimeOfSale <- as.factor(bronx$TaxClassAtTimeOfSale)
+str(bronx)
+```
+
+###*_Next, removed $ and comma from the SalesPrice column so numerical analysis can be ran on numbers and replacing NAs with 0:_* 
+```{r}
+bronx$SalePrice <- as.numeric(gsub('\\$|,', '', bronx$SalePrice))
+bronx$SalePrice[is.na(bronx$SalePrice)] <- 0
+bronx$LandSquareFeet <- as.integer(gsub('\\,', '',bronx$LandSquareFeet))
+bronx$LandSquareFeet[is.na(bronx$LandSquareFeet)] <- 0
+bronx$GrossSquareFeet <- as.integer(gsub('\\,', '',bronx$GrossSquareFeet))
+bronx$GrossSquareFeet[is.na(bronx$GrossSquareFeet)] <- 0
+bronx$TaxClassAtPresent <- sub("^$", "0", bronx$TaxClassAtPresent)
+bronx$SaleDate <- as.Date(bronx$SaleDate, format="%m/%d/%Y")
+head(bronx$SalePrice)
+```
+
+###*_Calculate TotalUnits from Residential + Commerical to correct after Factor conversion:_*
+``` {r}
+bronx$TotalUnits <- bronx$ResidentialUnits + bronx$CommercialUnits
+```
+
+###*_Fill in missing zip codes using blockCode dataset:_*
+``` {r}
+bronx$ZipCode <- ifelse(blockCode$BLOCK == bronx$Block, bronx$ZipCode <- blockCode$ZIP.CODE, bronx$ZipCode)
+```
+
+###*_Review the first few and last few rows of the revised tidy/clean dataset:_*
+```{r}
+head(bronx, n=3)
+tail(bronx, n=3)
+```
+
+###*_Export the revised tidy/clean datset:_*
+```{r}
+write.table(bronx, "mydata.txt", sep="\t")
+```
+
+###*_Plot the data as-is and then transformed using log transformation:_*
+```{r}
+bronx_sale <- bronx[bronx$SalePrice != 0,]
+plot(bronx_sale$GrossSquareFeet, bronx_sale$SalePrice)
+plot(log10(bronx_sale$GrossSquareFeet), log10(bronx_sale$SalePrice))
+```
+
+###*_Let's look at 1-, 2-, and 3-family homes_*
+```{r}
+bronx_homes <- bronx_sale[which(grepl("FAMILY",bronx_sale$BuildingClassDescription)),]
+dim(bronx_homes)
+plot(log10(bronx_homes$GrossSquareFeet),log10(bronx_homes$SalePrice))
+summary(bronx_homes[which(bronx_homes$salePrice<100000),])
+```
+
+###*_Remove outliers that seem like they weren't actual sales and plot again:_*
+```{r}
+bronx_homes$outliers <- (log10(bronx_homes$SalePrice) <=5) + 0
+bronx_homes <- bronx_homes[which(bronx_homes$outliers==0),]
+plot(log10(bronx_homes$GrossSquareFeet),log10(bronx_homes$SalePrice))
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
